@@ -44,7 +44,9 @@ int main(int argc, char **argv)
     char readBuffer[200] = {0};
 
     FILE* pDataLogFile;
+    FILE* pWserverLog;
     pDataLogFile = fopen("datalog.txt", "a+");
+    pWserverLog = fopen("wserver.log", "a+");
     
     clock_gettime(CLOCK_MONOTONIC, &timestamp);       // CLOCK_REALTIME
     time_seconds_prev = timestamp.tv_sec;
@@ -117,6 +119,12 @@ int main(int argc, char **argv)
                 time_millis_prev = 0;
             }
             printf("TS: %ld.%ld s\n", time_seconds_prev, time_millis_prev);
+            //clock_gettime(CLOCK_REALTIME, &timestamp);
+            //int year = 1970 + timestamp.tv_sec / SECS_IN_DAY / 365
+            time_t Time = time(NULL);
+            struct  tm tm = *localtime(&Time);
+
+            fprintf(pWserverLog, "Log entry: %02d/%02d/%04d %02d:%02d:%02d\n", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
             // send message
             if (0 == status)
@@ -124,6 +132,7 @@ int main(int argc, char **argv)
                 printf("Successful.\n");
                 printf("Requesting data from HC-06...\n");
                 status = send(s, "---> wserver data request", 43, 0);
+                fprintf(pWserverLog, "Connected to HC-06, Send request status: %d\n", status);
             }
 
             clock_gettime(CLOCK_MONOTONIC, &timestamp);       // CLOCK_REALTIME
@@ -141,6 +150,7 @@ int main(int argc, char **argv)
                 printf("... waiting ...\n");
                 bytes_read = recv(s, readBuffer, sizeof(readBuffer), 0);
                 printf("received packet\n");
+                fprintf(pWserverLog, "received data: %d bytes\n", bytes_read);
                 if (bytes_read > 0)
                 {
                     printf("Received data: %s\n", readBuffer);
@@ -165,6 +175,8 @@ int main(int argc, char **argv)
             printf("Close connection.\n");
             close(s);
 
+            fflush(pWserverLog);
+
             clock_gettime(CLOCK_MONOTONIC, &timestamp);
             previousTimeMs = timestamp.tv_sec;
             //previousTimeMs = currentTimeMs;
@@ -172,6 +184,7 @@ int main(int argc, char **argv)
     }
 
     fclose(pDataLogFile);
+    fclose(pWserverLog);
 
     return 0;
 }
