@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     time_t  time_seconds;
     time_t  time_seconds_prev;
     struct  timespec timestamp;
-    long    currentTimeMs;
+    long    currentTimeSec;
     long    previousTimeMs;
     
     // Scan devices init
@@ -92,11 +92,11 @@ int main(int argc, char **argv)
     while (run_server)
     {
         clock_gettime(CLOCK_MONOTONIC, &timestamp);
-        currentTimeMs = timestamp.tv_sec; // * 1000 + timestamp.tv_nsec / 1000;
+        currentTimeSec = timestamp.tv_sec; // * 1000 + timestamp.tv_nsec / 1000;
 
-        if (currentTimeMs - previousTimeMs > MAIN_CYCLE_PERIOD_SEC)
+        //if (currentTimeSec - previousTimeMs > MAIN_CYCLE_PERIOD_SEC)
         {
-            printf("   ===> currentTimeMs (sec) = %ld\n", currentTimeMs);
+            printf("   ===> currentTimeSec (sec) = %ld\n", currentTimeSec);
             
             // RFCOMM client
             // allocate socket
@@ -179,8 +179,11 @@ int main(int argc, char **argv)
 
             clock_gettime(CLOCK_MONOTONIC, &timestamp);
             previousTimeMs = timestamp.tv_sec;
-            //previousTimeMs = currentTimeMs;
+            //previousTimeMs = currentTimeSec;
         }
+    
+        // wait
+        sleep(MAIN_CYCLE_PERIOD_SEC - (timestamp.tv_sec - currentTimeSec));
     }
 
     fclose(pDataLogFile);
